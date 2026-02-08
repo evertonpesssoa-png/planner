@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Planner</title>
+  <!-- CSS do projeto -->
+  <link rel="stylesheet" href="static/css/responsivo.css">
+  <link rel="stylesheet" href="static/css/cyberpunk.css">
+</head>
+<body>
+
+<h1>Planner</h1>
+
+<!-- Calendário -->
+<div id="calendar"></div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <h2>Dashboard</h2>
+  <pre id="dashboardContent">Carregando...</pre>
+</div>
+
+<!-- Modal de dia -->
+<div id="dayModal" style="display:none;">
+  <h3 id="modalDate"></h3>
+  <textarea id="modalText" rows="5" style="width:100%;"></textarea><br>
+  <label><input type="checkbox" id="modalImportant"> Importante</label><br>
+  <button onclick="saveDay()">Salvar</button>
+  <button onclick="closeModal()">Fechar</button>
+</div>
+
+<script>
+const DATA_FILE = 'data/notes.json';
+let data = {};
+let currentKey = '';
+
+// Carrega memória do JSON ou localStorage
+async function loadData() {
+  try {
+    const res = await fetch(DATA_FILE);
+    if(res.ok) {
+      data = await res.json();
+    } else {
+      data = {};
+    }
+  } catch(err) {
+    console.warn('Erro carregando JSON, usando localStorage', err);
+    data = JSON.parse(localStorage.getItem('plannerData') || '{}');
+  }
+  renderCalendar();
+  renderDashboard();
+}
+
+// Renderiza calendário
+function renderCalendar() {
+  const calendarDiv = document.getElementById('calendar');
+  calendarDiv.innerHTML = '';
+  const year = new Date().getFullYear();
+
+  for(let m=1; m<=12; m++) {
+    const monthDiv = document.createElement('div');
+    monthDiv.className = 'month';
+    monthDiv.innerHTML = `<h2>${new Date(year,m-1).toLocaleString('pt-BR',{month:'long'})}</h2>`;
+
+    for(let d=1; d<=31; d++) {
+      const key = `${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'day';
+      dayDiv.innerText = d;
+
+      if(data[key] && data[key].text) {
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'note';
+        noteDiv.innerText = data[key].text;
+        dayDiv.appendChild(noteDiv);
+      }
+
+      dayDiv.onclick = () => openModal(key, d, m, year);
+      monthDiv.appendChild(dayDiv);
+    }
+
+    calendarDiv.appendChild(monthDiv);
+  }
+}
+
+// Modal
+function openModal(key, day, month, year) {
+  currentKey = key;
+  document.getElementById('modalDate').innerText = `${day}/${month}/${year}`;
+  document.getElementById('modalText').value = data[key]?.text || '';
+  document.getElementById('modalImportant').checked = data[key]?.important || false;
+  document.getElementById('dayModal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('dayModal').style.display = 'none';
+  currentKey = '';
+}
+
+// Salvar nota
+function saveDay() {
+  const text = document.getElementById('modalText').value.trim();
+  const important = document.getElementById('modalImportant').checked;
+  data[currentKey] = { text, important };
+
+  renderCalendar();
+  renderDashboard();
+  closeModal();
+
+  localStorage.setItem('plannerData', JSON.stringify(data));
+}
+
+// Dashboard simples
+function renderDashboard() {
+  const dashboard = document.getElementById('dashboardContent');
+  const totalNotes = Object.keys(data).length;
+  const importantNotes = Object.values(data).filter(n => n.important).length;
+  dashboard.innerText = `Notas totais: ${totalNotes}\nNotas importantes: ${importantNotes}`;
+}
+
+// Carrega dados do localStorage se existir
+const stored = localStorage.getItem('plannerData');
+if(stored) data = JSON.parse(stored);
+
+loadData();
+</script>
+
+</body>
+</html>
