@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="day-container">
+  <h2>📊 Dashboard {{ year }}</h2>
+
+  <p>🗓 Dias com anotações: <strong>{{ insights.total_days_with_notes }}</strong></p>
+  <p>⭐ Dias importantes: <strong>{{ insights.important_days }}</strong></p>
+  <p>✍️ Tamanho médio das anotações: <strong>{{ insights.avg_text_size }}</strong> caracteres</p>
+
+  <p><em>{{ insights.insight }}</em></p>
+
+  <h3>📅 Dias da semana mais críticos</h3>
+  <ul>
+    {% for day, count in insights.weekday_distribution.items() %}
+      <li>{{ day }} → {{ count }} dias importantes</li>
+    {% endfor %}
+  </ul>
+
+  <a href="/" class="back-btn">⬅ Voltar ao calendário</a>
+</div>
+
+{% endblock %}

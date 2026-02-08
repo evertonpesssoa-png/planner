@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="calendar-grid">
+
+{% for month in months %}
+<section class="month">
+  <h2>{{ month.name }}</h2>
+
+  <div class="week days">
+    <span>Seg</span>
+    <span>Ter</span>
+    <span>Qua</span>
+    <span>Qui</span>
+    <span>Sex</span>
+    <span>Sáb</span>
+    <span>Dom</span>
+  </div>
+
+  {% for week in month.weeks %}
+  <div class="week">
+    {% for day in week %}
+
+      {% if day == 0 %}
+        <span class="day empty"></span>
+      {% else %}
+
+        {# ===============================
+           CHAVE PADRONIZADA (YYYY-MM-DD)
+           =============================== #}
+        {% set key = year ~ "-" ~ "%02d"|format(month.number) ~ "-" ~ "%02d"|format(day) %}
+
+        {# ===============================
+           VERIFICAÇÃO SEGURA (SEM BUG JINJA)
+           =============================== #}
+        {% if key in notes %}
+          {% set important = notes[key]["important"] %}
+        {% else %}
+          {% set important = false %}
+        {% endif %}
+
+        <a href="/day/{{ year }}/{{ month.number }}/{{ day }}"
+           class="day{% if important %} important{% endif %}">
+
+          {{ day }}
+
+          {% if important %}
+            <span class="badge">🔔</span>
+            <span class="star">⭐</span>
+          {% endif %}
+
+        </a>
+
+      {% endif %}
+
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>
+{% endfor %}
+
+</div>
+
+{% endblock %}

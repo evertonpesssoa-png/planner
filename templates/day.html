@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="day-container">
+  <h2>📅 {{ day }}/{{ month }}/{{ year }}</h2>
+
+  <!-- FORMULÁRIO: SALVA APENAS A ANOTAÇÃO -->
+  <form method="post">
+    <textarea
+      name="text"
+      rows="8"
+      placeholder="Escreva sua anotação aqui..."
+    >{{ note.text }}</textarea>
+
+    <button type="submit">💾 Salvar anotação</button>
+  </form>
+
+  <!-- CHECKBOX: SALVA AUTOMATICAMENTE -->
+  <label class="important-check">
+    <input
+      type="checkbox"
+      id="importantCheck"
+      {% if note.important %}checked{% endif %}
+    >
+    Marcar como importante ⭐
+  </label>
+
+  <a href="/" class="back-btn">⬅ Voltar ao calendário</a>
+</div>
+
+<script>
+  const checkbox = document.getElementById("importantCheck");
+
+  checkbox.addEventListener("change", () => {
+    fetch("/toggle-important", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        key: "{{ year }}-{{ '%02d'|format(month) }}-{{ '%02d'|format(day) }}",
+        important: checkbox.checked
+      })
+    });
+  });
+</script>
+
+{% endblock %}

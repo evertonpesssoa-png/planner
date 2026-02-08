@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner {{ year }}</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responsivo.css') }}">
+</head>
+
+<body>
+
+<header class="top-bar">
+  <h1>📅 Planner {{ year }}</h1>
+
+  <nav class="year-nav">
+    <a href="/?year={{ year - 1 }}">⏪ {{ year - 1 }}</a>
+    <span>{{ year }}</span>
+    <a href="/?year={{ year + 1 }}">{{ year + 1 }} ⏩</a>
+  </nav>
+
+  <a href="/dashboard/{{ year }}" class="dashboard-link">📊 Dashboard</a>
+</header>
+
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+</body>
+</html>
