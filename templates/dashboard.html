@@ -1,23 +1,334 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="day-container">
-  <h2>📊 Dashboard {{ year }}</h2>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<header class="cyber-header">
+  MENTAL CYBER DASHBOARD — {{ year }}
+</header>
+
+<!-- STATUS -->
+<div class="card">
+  <h2>Status Mental</h2>
   <p>🗓 Dias com anotações: <strong>{{ insights.total_days_with_notes }}</strong></p>
   <p>⭐ Dias importantes: <strong>{{ insights.important_days }}</strong></p>
-  <p>✍️ Tamanho médio das anotações: <strong>{{ insights.avg_text_size }}</strong> caracteres</p>
-
-  <p><em>{{ insights.insight }}</em></p>
-
-  <h3>📅 Dias da semana mais críticos</h3>
-  <ul>
-    {% for day, count in insights.weekday_distribution.items() %}
-      <li>{{ day }} → {{ count }} dias importantes</li>
-    {% endfor %}
-  </ul>
-
-  <a href="/" class="back-btn">⬅ Voltar ao calendário</a>
+  <p>✍️ Média de caracteres: <strong>{{ insights.avg_text_size }}</strong></p>
+  <p class="insight-text">{{ insights.insight }}</p>
 </div>
+
+<!-- ALERTAS -->
+<div class="card">
+  <h2>Alertas do Sistema</h2>
+  {% for alert in insights.alerts %}
+    <p>{{ alert }}</p>
+  {% endfor %}
+</div>
+
+<!-- BURNOUT ATUAL -->
+<div class="card">
+  <h2>Nível de Burnout</h2>
+  <canvas id="burnoutGauge"></canvas>
+</div>
+
+<!-- PREVISÃO -->
+<div class="card">
+  <h2>Previsão de Burnout (30 dias)</h2>
+  <canvas id="predictionGauge"></canvas>
+</div>
+
+<!-- COLAPSO -->
+<div class="card">
+  <h2>Detector de Colapso</h2>
+  <p>Nível de risco: <strong>{{ insights.collapse_risk }}</strong></p>
+</div>
+
+<!-- ANTIFRÁGIL -->
+<div class="card">
+  <h2>Score Antifrágil</h2>
+  <canvas id="antifragileGauge"></canvas>
+</div>
+
+<!-- CARGA MENTAL -->
+<div class="card">
+  <h2>Carga Mental por Dia da Semana</h2>
+  <canvas id="mentalChart"></canvas>
+</div>
+
+<!-- INTENSIDADE -->
+<div class="card">
+  <h2>Intensidade por Dia</h2>
+  <canvas id="barChart"></canvas>
+</div>
+
+<!-- PRESSÃO ACUMULADA -->
+<div class="card">
+  <h2>Pressão Acumulada</h2>
+  <canvas id="pressureChart"></canvas>
+</div>
+
+<!-- SILÊNCIO -->
+<div class="card">
+  <h2>Detector de Silêncio</h2>
+  <canvas id="silenceChart"></canvas>
+</div>
+
+<!-- RADAR -->
+<div class="card">
+  <h2>Perfil Semanal</h2>
+  <canvas id="radarChart"></canvas>
+</div>
+
+<a href="/" class="back-btn">⬅ Voltar</a>
+
+<!-- ======================
+     DIVA AI FLUTUANTE
+====================== -->
+<div id="divaMinimized">🤖 Diva AI</div>
+
+<div id="divaChat">
+  <div id="divaHeader">
+    🤖 Diva AI
+    <span id="closeChat">✖</span>
+  </div>
+  <div id="divaBody">
+    <div id="messages"></div>
+    <input type="text" id="divaInput" placeholder="Digite aqui para analisar...">
+    <button id="divaSend">Enviar</button>
+  </div>
+</div>
+
+<style>
+html, body{
+  margin:0;
+  padding:0;
+  background:black;
+  font-family:'Orbitron',sans-serif;
+  color:#0ff;
+}
+
+.cyber-header{
+  text-align:center;
+  font-size:28px;
+  padding:20px;
+  background:linear-gradient(90deg,#ff00cc,#00ffff);
+  color:white;
+  text-shadow:0 0 10px #00ffff,0 0 20px #ff00cc;
+}
+
+.card{
+  background:rgba(0,0,0,0.75);
+  margin:25px auto;
+  padding:25px;
+  border-radius:18px;
+  max-width:900px;
+  border:2px solid #ff00cc;
+  box-shadow:0 0 25px #0ff,0 0 40px #ff00cc;
+}
+
+canvas{
+  background:rgba(0,0,0,0.6);
+  border-radius:14px;
+  box-shadow:0 0 20px #00ffff inset;
+  width:100% !important;
+  height:320px !important;
+}
+
+.back-btn{
+  display:block;
+  text-align:center;
+  margin:30px;
+  font-size:18px;
+  color:#0ff;
+}
+
+/* ======================
+   Diva AI Flutuante
+====================== */
+#divaMinimized{
+  position:fixed;
+  bottom:40px;
+  right:40px;
+  background:linear-gradient(90deg,#ff00cc,#00ffff);
+  color:white;
+  padding:12px 18px;
+  border-radius:18px;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 0 25px #ff00cc,0 0 35px #00ffff;
+  z-index:9999;
+  font-size:18px;
+}
+
+#divaChat{
+  position:fixed;
+  bottom:100px;
+  right:calc(50% - 200px); /* centralizado horizontalmente */
+  width:400px;
+  max-width:90%;
+  background:rgba(0,0,0,0.95);
+  border:2px solid #ff00cc;
+  border-radius:20px;
+  box-shadow:0 0 30px #ff00cc,0 0 40px #00ffff;
+  font-family:'Orbitron',sans-serif;
+  z-index:9999;
+  display:none;
+}
+
+#divaHeader{
+  background:linear-gradient(90deg,#ff00cc,#00ffff);
+  padding:12px;
+  color:white;
+  font-weight:bold;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-radius:20px 20px 0 0;
+  text-shadow:0 0 6px #0ff;
+}
+
+#closeChat{
+  cursor:pointer;
+  font-size:18px;
+}
+
+#divaBody{
+  padding:12px;
+}
+
+#messages{
+  height:250px;
+  overflow-y:auto;
+  border:1px solid #0ff;
+  margin-bottom:10px;
+  padding:10px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.7);
+  color:#0ff;
+  font-size:14px;
+}
+
+#divaInput{
+  width:calc(100% - 80px);
+  padding:8px;
+  background:black;
+  border:1px solid #0ff;
+  color:#0ff;
+  border-radius:6px;
+}
+
+#divaSend{
+  width:70px;
+  padding:8px;
+  background:#ff00cc;
+  border:none;
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+#messages p{
+  margin:5px 0;
+}
+</style>
+
+<script>
+/* ======================
+   Dados Flask
+====================== */
+const weekdayData = {{ insights.weekday_distribution | tojson | safe }};
+const labels = Object.keys(weekdayData);
+const values = Object.values(weekdayData);
+const burnoutScore = {{ insights.burnout_score }};
+const predictedBurnout = {{ insights.predicted_burnout_30 }};
+const antifragileScore = {{ insights.antifragile_score }};
+let cumulative = [];
+let total = 0;
+values.forEach(v=>{ total+=v; cumulative.push(total); });
+let silence = values.map(v => v===0?1:0);
+const maxVal = Math.max(...values,1);
+const radarValues = values.map(v=>(v/maxVal)*10);
+
+/* ======================
+   GAUGES
+====================== */
+function createGauge(id,value,color){
+  new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{datasets:[{data:[value,100-value], backgroundColor:[color,'rgba(0,255,255,0.1)'],borderWidth:0}]},
+    options:{cutout:'75%', plugins:{legend:{display:false}}}
+  });
+}
+createGauge('burnoutGauge',burnoutScore,'magenta');
+createGauge('predictionGauge',predictedBurnout,'orange');
+createGauge('antifragileGauge',antifragileScore,'cyan');
+
+/* ======================
+   GRÁFICOS
+====================== */
+// Linha mental
+new Chart(document.getElementById('mentalChart'),{
+  type:'line',
+  data:{labels:labels,datasets:[{label:'Carga Mental',data:values,borderColor:'cyan',backgroundColor:'rgba(0,255,255,0.15)',tension:0.4}]}
+});
+// Barra pulsante
+const barCtx = document.getElementById('barChart').getContext('2d');
+const barChart = new Chart(barCtx,{
+  type:'bar',
+  data:{labels:labels,datasets:[{label:'Intensidade',data:values,backgroundColor:'magenta'}]},
+  options:{animation:{duration:0},plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+});
+let pulsePhase=0; function pulseBars(){ pulsePhase+=0.05; barChart.data.datasets[0].data = values.map(v=>v*(1+0.1*Math.sin(pulsePhase))); barChart.update('none'); requestAnimationFrame(pulseBars);}
+requestAnimationFrame(pulseBars);
+
+// Pressão Acumulada
+const pressureCtx=document.getElementById('pressureChart').getContext('2d');
+const gradient=pressureCtx.createLinearGradient(0,0,0,320);
+gradient.addColorStop(0,'#ff00ff'); gradient.addColorStop(0.5,'#00ffff'); gradient.addColorStop(1,'#ff00ff');
+new Chart(pressureCtx,{type:'line',data:{labels:labels,datasets:[{label:'Pressão Acumulada',data:cumulative,borderColor:gradient,backgroundColor:'rgba(255,0,255,0.15)',pointBackgroundColor:'#00ffff',pointBorderColor:'#ff00ff',pointRadius:5,pointHoverRadius:8,fill:true,tension:0.35,borderWidth:3}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(0,0,0,0.8)',titleColor:'#ff00ff',bodyColor:'#0ff',borderColor:'#ff00ff',borderWidth:1,bodyFont:{size:14,family:'Orbitron'},titleFont:{size:16,family:'Orbitron'}}},scales:{x:{ticks:{color:'#0ff'},grid:{color:'rgba(255,0,255,0.2)'}},y:{ticks:{color:'#0ff'},grid:{color:'rgba(0,255,255,0.2)'},beginAtZero:true}},animation:{duration:2000,easing:'easeInOutSine',onProgress:function(anim){const phase=Math.sin(anim.currentStep/10); pressureChart.data.datasets[0].backgroundColor=`rgba(255,0,255,${0.15+0.05*phase})`;}}}});
+
+// Silêncio
+new Chart(document.getElementById('silenceChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Sem atividade',data:silence,backgroundColor:'rgba(0,255,255,0.6)'}]}});
+
+// Radar
+const radarCtx=document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx,{type:'radar',data:{labels:labels,datasets:[{label:'Perfil',data:radarValues,borderColor:'magenta',borderWidth:2,backgroundColor:'rgba(255,0,255,0.25)',pointBackgroundColor:'cyan',pointBorderColor:'magenta',pointRadius:6,pointHoverRadius:8} ]},options:{scales:{r:{angleLines:{color:'rgba(0,255,255,0.3)'},grid:{color:'rgba(255,0,255,0.2)',circular:true},pointLabels:{color:'#0ff',font:{size:14}},suggestedMin:0,suggestedMax:10}},plugins:{legend:{display:false}},elements:{line:{tension:0.3}},animation:{onProgress:function(animation){radarChart.data.datasets[0].backgroundColor=`rgba(255,0,255,${0.25+0.05*Math.sin(animation.currentStep/10)})`}}}});
+
+/* ======================
+   Diva AI Chat
+====================== */
+const divaMin = document.getElementById('divaMinimized');
+const divaChat = document.getElementById('divaChat');
+const closeChat = document.getElementById('closeChat');
+const messagesDiv = document.getElementById('messages');
+const input = document.getElementById('divaInput');
+const sendBtn = document.getElementById('divaSend');
+
+// Abrir chat
+divaMin.onclick = ()=>{divaMin.style.display='none'; divaChat.style.display='block';};
+
+// Minimizar chat
+closeChat.onclick = ()=>{divaChat.style.display='none'; divaMin.style.display='block';};
+
+// Envio de mensagem
+sendBtn.onclick = async ()=>{
+  const msg = input.value.trim();
+  if(!msg) return;
+  messagesDiv.innerHTML += `<p>🗨️ Você: ${msg}</p>`;
+  input.value='';
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  try{
+    const resp = await fetch('/analysis.html?query='+encodeURIComponent(msg));
+    const data = await resp.text();
+    messagesDiv.innerHTML += `<p>🤖 Diva AI: ${data}</p>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }catch(err){
+    messagesDiv.innerHTML += `<p style="color:red">Erro Diva AI</p>`;
+  }
+};
+
+// Enter envia mensagem
+input.addEventListener('keypress', e=>{if(e.key==='Enter') sendBtn.click();});
+</script>
 
 {% endblock %}
