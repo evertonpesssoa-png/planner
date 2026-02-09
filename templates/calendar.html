@@ -1,64 +1,65 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner {{ year }}</title>
 
-<div class="calendar-grid">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responsivo.css') }}">
 
-{% for month in months %}
-<section class="month">
-  <h2>{{ month.name }}</h2>
+<style>
+  /* Container principal com scroll natural */
+  main.main-content {
+      max-height: none; /* remove limite de altura */
+      overflow-y: visible; /* rolagem normal da página */
+  }
 
-  <div class="week days">
-    <span>Seg</span>
-    <span>Ter</span>
-    <span>Qua</span>
-    <span>Qui</span>
-    <span>Sex</span>
-    <span>Sáb</span>
-    <span>Dom</span>
-  </div>
+  /* Faz o cabeçalho rolar junto */
+  .top-bar {
+      position: static !important;
+  }
 
-  {% for week in month.weeks %}
-  <div class="week">
-    {% for day in week %}
+  /* Destaque para o dia atual */
+  .day.today {
+      border: 2px solid #ff0;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 0, 0.2);
+  }
 
-      {% if day == 0 %}
-        <span class="day empty"></span>
-      {% else %}
+  /* Header do dia atual */
+  .today-header {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+  }
+</style>
+</head>
 
-        {# ===============================
-           CHAVE PADRONIZADA (YYYY-MM-DD)
-           =============================== #}
-        {% set key = year ~ "-" ~ "%02d"|format(month.number) ~ "-" ~ "%02d"|format(day) %}
+<body>
 
-        {# ===============================
-           VERIFICAÇÃO SEGURA (SEM BUG JINJA)
-           =============================== #}
-        {% if key in notes %}
-          {% set important = notes[key]["important"] %}
-        {% else %}
-          {% set important = false %}
-        {% endif %}
+<header class="top-bar">
+  <h1>
+    📅 Planner {{ year }}
+    {% if day_emoji is defined %}
+      {{ day_emoji }} Hoje: {{ today_date }}/{{ current_month }}/{{ year }}
+    {% endif %}
+  </h1>
 
-        <a href="/day/{{ year }}/{{ month.number }}/{{ day }}"
-           class="day{% if important %} important{% endif %}">
+  <nav class="year-nav">
+    <a href="/?year={{ year - 1 }}">⏪ {{ year - 1 }}</a>
+    <span>{{ year }}</span>
+    <a href="/?year={{ year + 1 }}">{{ year + 1 }} ⏩</a>
+  </nav>
 
-          {{ day }}
+  <a href="/dashboard/{{ year }}" class="dashboard-link">📊 Dashboard</a>
+</header>
 
-          {% if important %}
-            <span class="badge">🔔</span>
-            <span class="star">⭐</span>
-          {% endif %}
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
 
-        </a>
-
-      {% endif %}
-
-    {% endfor %}
-  </div>
-  {% endfor %}
-</section>
-{% endfor %}
-
-</div>
-
-{% endblock %}
+</body>
+</html>
