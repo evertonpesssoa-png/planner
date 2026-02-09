@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-import calendar, json, os
+import calendar
+import json
+import os
 from datetime import date
 from analysis import analyze_year
 
@@ -14,6 +16,7 @@ DATA_FILE = "data/notes.json"
 # ======================
 # INFRA BÁSICA
 # ======================
+
 if not os.path.exists("data"):
     os.makedirs("data")
 
@@ -35,6 +38,7 @@ def save_data(data):
 # ======================
 # CALENDÁRIO (HOME)
 # ======================
+
 @app.route("/")
 def calendar_view():
     year = int(request.args.get("year", date.today().year))
@@ -57,13 +61,13 @@ def calendar_view():
 
 
 # ======================
-# DIA (ANOTAÇÃO + BOTÃO SALVAR)
+# DIA (ANOTAÇÃO)
 # ======================
+
 @app.route("/day/<int:year>/<int:month>/<int:day>", methods=["GET", "POST"])
 def day_view(year, month, day):
     data = load_data()
 
-    # 🔑 chave padronizada (ESSENCIAL)
     key = f"{year}-{month:02d}-{day:02d}"
 
     if request.method == "POST":
@@ -91,8 +95,9 @@ def day_view(year, month, day):
 
 
 # ======================
-# ✅ TOGGLE DO CHECKBOX (AUTO-SAVE)
+# TOGGLE IMPORTANTE
 # ======================
+
 @app.route("/toggle-important", methods=["POST"])
 def toggle_important():
     data = load_data()
@@ -117,6 +122,7 @@ def toggle_important():
 # ======================
 # DASHBOARD
 # ======================
+
 @app.route("/dashboard/<int:year>")
 def dashboard(year):
     insights = analyze_year(year)
@@ -126,6 +132,100 @@ def dashboard(year):
         insights=insights
     )
 
+
+# ======================
+# 🤖 IA LOCAL (Perguntar IA)
+# ======================
+
+def generate_ai_response(question, data):
+    burnout = data.get("burnout", 0)
+    antifragile = data.get("antifragile", 0)
+    predicted = data.get("predicted", 0)
+    weekly = data.get("weekly", [])
+
+    response_parts = []
+
+    # Burnout
+    if burnout > 70:
+        response_parts.append(
+            "Seu nível atual de burnout está alto. Considere reduzir carga e aumentar recuperação."
+        )
+    elif burnout > 40:
+        response_parts.append(
+            "Seu nível de estresse está moderado. Atenção ao acúmulo nas próximas semanas."
+        )
+    else:
+        response_parts.append(
+            "Seu nível atual de burnout está sob controle."
+        )
+
+    # Tendência
+    if predicted > burnout + 10:
+        response_parts.append(
+            "A tendência indica aumento de pressão nos próximos 30 dias."
+        )
+    elif predicted < burnout - 10:
+        response_parts.append(
+            "A tendência indica recuperação progressiva."
+        )
+    else:
+        response_parts.append(
+            "A tendência futura está relativamente estável."
+        )
+
+    # Antifrágil
+    if antifragile > 70:
+        response_parts.append(
+            "Seu sistema mental está adaptativo e resiliente."
+        )
+    elif antifragile < 40:
+        response_parts.append(
+            "Baixa antifragilidade detectada. Falta de recuperação ou excesso de pressão."
+        )
+    else:
+        response_parts.append(
+            "Nível moderado de adaptação ao estresse."
+        )
+
+    # Padrão semanal
+    if weekly:
+        max_day = weekly.index(max(weekly))
+        days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
+        response_parts.append(
+            f"Seu dia de maior carga mental é: {days[max_day]}."
+        )
+
+    # Personalização pela pergunta
+    q = question.lower()
+
+    if "risco" in q or "colapso" in q:
+        if burnout > 70 and predicted > 70:
+            response_parts.append("Risco de colapso elevado.")
+        else:
+            response_parts.append("Risco de colapso controlado.")
+
+    if "melhorar" in q or "como" in q:
+        response_parts.append(
+            "Sugestão: reduza picos de carga e distribua o esforço ao longo da semana."
+        )
+
+    return " ".join(response_parts)
+
+
+@app.route("/ask_ai", methods=["POST"])
+def ask_ai():
+    payload = request.json
+    question = payload.get("question", "")
+    data = payload.get("data", {})
+
+    answer = generate_ai_response(question, data)
+
+    return jsonify({"answer": answer})
+
+
+# ======================
+# RUN
+# ======================
 
 if __name__ == "__main__":
     app.run(debug=True)
