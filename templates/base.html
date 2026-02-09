@@ -7,12 +7,41 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/responsivo.css') }}">
+
+<style>
+  /* Container para permitir scroll */
+  main.main-content {
+      max-height: 80vh;
+      overflow-y: auto;
+  }
+
+  /* Destaque para o dia atual */
+  .day.today {
+      border: 2px solid #ff0;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 0, 0.2);
+  }
+
+  /* Header do dia atual */
+  .today-header {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+  }
+</style>
 </head>
 
 <body>
 
 <header class="top-bar">
-  <h1>📅 Planner {{ year }}</h1>
+  <h1>
+    📅 Planner {{ year }}
+    {% if day_emoji is defined %}
+      {{ day_emoji }} Hoje: {{ today_date }}/{{ current_month }}/{{ year }}
+    {% endif %}
+  </h1>
 
   <nav class="year-nav">
     <a href="/?year={{ year - 1 }}">⏪ {{ year - 1 }}</a>
