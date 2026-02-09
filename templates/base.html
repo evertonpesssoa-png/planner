@@ -9,10 +9,15 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/responsivo.css') }}">
 
 <style>
-  /* Container para permitir scroll */
+  /* Container principal com scroll natural */
   main.main-content {
-      max-height: 80vh;
-      overflow-y: auto;
+      max-height: none; /* remove limite de altura */
+      overflow-y: visible; /* rolagem normal da página */
+  }
+
+  /* Faz o cabeçalho rolar junto */
+  .top-bar {
+      position: static !important;
   }
 
   /* Destaque para o dia atual */
