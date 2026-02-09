@@ -53,11 +53,14 @@ def calendar_view():
         })
 
     return render_template(
-        "calendar.html",
-        months=months,
-        year=year,
-        notes=data
-    )
+    "calendar.html",
+    months=months,
+    year=year,
+    notes=data,
+    current_day=date.today().day,
+    current_month=date.today().month
+)
+
 
 
 # ======================
